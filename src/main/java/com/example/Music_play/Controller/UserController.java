@@ -4,6 +4,7 @@ import com.example.Music_play.exception.ResourceNotFoundException;
 import com.example.Music_play.model.User;
 import com.example.Music_play.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -58,4 +59,16 @@ public class UserController {
         updateUser.setEmail(user.getEmail());
         return updateUser;
     }
+    @PostMapping(value = "/login")
+    public User login(@RequestParam String phone, @RequestParam String password){
+        User user = userRepository.Login(phone, password);
+        if(user != null)
+        {
+            return user;
+        }
+        else {
+            return null;
+        }
+    }
+
 }

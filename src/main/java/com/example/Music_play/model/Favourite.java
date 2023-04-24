@@ -24,6 +24,6 @@ public class Favourite {
     @ManyToOne
     private Song song;
 
-    @ManyToOne
-    private User user;
+//    @ManyToOne
+//    private User user;
 }
