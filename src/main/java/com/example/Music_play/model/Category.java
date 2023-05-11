@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.core.SpringVersion;
 
 import javax.persistence.*;
 import java.util.List;
@@ -14,31 +13,23 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "song")
-public class Song {
+@Table(name = "category")
+public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+
     @Column(name = "name")
     private String name;
 
-    @Column(name = "author")
-    private String author;
-
-    @Column(name = "singer")
-    private String singer;
-
-    @Column(name = "link")
-    private String link;
 
     @Column(name = "image")
     private String image;
 
-    @ManyToOne
-    private Category category;
+    @Column(name = "description")
+    private String description;
 
-    @OneToMany(mappedBy = "song", cascade = CascadeType.ALL)
-    private List<Favourite> favourites;
-
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
+    private List<Song> songs;
 }

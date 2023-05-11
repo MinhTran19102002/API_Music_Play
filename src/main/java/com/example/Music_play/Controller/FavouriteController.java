@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/favourite")
-public class Favourite {
+public class FavouriteController {
     @Autowired
     FavouriteReponsitory favouriteReponsitory;
 }

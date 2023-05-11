@@ -2,10 +2,9 @@ package com.example.Music_play.Controller;
 
 import com.example.Music_play.exception.ResourceNotFoundException;
 import com.example.Music_play.model.User;
+import com.example.Music_play.modelMessage.UserMessage;
 import com.example.Music_play.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.query.Param;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,22 +19,21 @@ public class UserController {
     public List<User> getAllUser(){
         return userRepository.findAll();
     }
-    @GetMapping(value = "/")
-    public String getPage(){
-        return "welcome";
-    }
 
-    @PostMapping(value = "/create")
-    public String createUser(@RequestBody User user){
-//        userRepository.findBy()
-//        if(user.getPhone() ==)
+    @PostMapping(value = "/register")
+    public UserMessage register(@RequestBody User user){
+        UserMessage userMessage = new UserMessage();
         try {
             userRepository.save(user);
-            return  "You have successfully created a user account!";
+            userMessage.setUser(user);
+            userMessage.setMessage("You have successfully created a user account!");
+            return  userMessage;
         }
         catch (Exception e)
         {
-            return "You have failed created a user account!";
+            userMessage.setUser(null);
+            userMessage.setMessage("You have failed to create a user account!");
+            return userMessage;
         }
 
         //return  "You have successfully created a user account!";
@@ -60,14 +58,20 @@ public class UserController {
         return updateUser;
     }
     @PostMapping(value = "/login")
-    public User login(@RequestParam String phone, @RequestParam String password){
+    public UserMessage login(@RequestParam String phone, @RequestParam String password){
+        System.out.println(phone);
         User user = userRepository.Login(phone, password);
+        UserMessage userLogin = new UserMessage();
         if(user != null)
         {
-            return user;
+            userLogin.setMessage("Login is successful!");
+            userLogin.setUser(user);
+            return userLogin;
         }
         else {
-            return null;
+            userLogin.setMessage("Login is failed!");
+            userLogin.setUser(null);
+            return userLogin;
         }
     }
 
