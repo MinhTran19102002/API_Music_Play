@@ -18,12 +18,9 @@ public class Favourite {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-//    @ManyToOne
-//    private User user;
-
     @ManyToOne
     private Song song;
 
-//    @ManyToOne
-//    private User user;
+    @ManyToOne
+    private User user;
 }

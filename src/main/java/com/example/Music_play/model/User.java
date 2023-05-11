@@ -35,8 +35,8 @@ public class User {
     @Column(name = "password")
     private String password;
 
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-//    private List<Favourite> favourites;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Favourite> favourites;
 
 //    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
 //    private List<Favourite> favourites;

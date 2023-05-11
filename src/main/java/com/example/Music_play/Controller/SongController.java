@@ -2,29 +2,36 @@ package com.example.Music_play.Controller;
 
 
 import com.cloudinary.Cloudinary;
-import com.cloudinary.api.ApiResponse;
 import com.cloudinary.utils.ObjectUtils;
-import com.cloudinary.utils.StringUtils;
-import com.example.Music_play.MusicPlayApplication;
 import com.example.Music_play.exception.ResourceNotFoundException;
+import com.example.Music_play.mapper.SongMapper;
+import com.example.Music_play.model.Category;
 import com.example.Music_play.model.Song;
-import com.example.Music_play.model.User;
+import com.example.Music_play.modelDTO.SongDTO;
+import com.example.Music_play.modelMessage.SongMessage;
+import com.example.Music_play.repository.CategoryRepository;
 import com.example.Music_play.repository.SongRepository;
-import com.sun.tools.javac.Main;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringApplication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/song")
 public class SongController {
     @Autowired
     private SongRepository songRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    @Autowired
+    private SongMapper songMapper;
 
     private final Cloudinary cloudinary;
 
@@ -33,19 +40,42 @@ public class SongController {
         this.cloudinary = cloudinary;
     }
 
-
-
     @PostMapping(value = "/create")
-    public String createSong(@RequestParam("file") MultipartFile file, @RequestParam String name) throws IOException {
+    public String createSong(@RequestParam("file") MultipartFile file,@RequestParam("image") MultipartFile image, @RequestParam String name,@RequestParam String author, @RequestParam String singer, @RequestParam Long category_id) throws IOException {
         String fileName = name;
-        Map<String, String> options = new HashMap<>();
-        options.put("resource_type", "video");
-        options.put("format", "mp3");
-        Map<String, Object> result = cloudinary.uploader().upload(file.getBytes(), options);
-        String link = result.get("secure_url").toString();
+        String link ="";
+        String linkImage = "";
+
+        //upload file ảnh
+        try {
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(image.getBytes(), ObjectUtils.asMap("resource_type", "auto"));
+            linkImage = uploadResult.get("secure_url").toString();
+
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+        //upload file nhạc mp3
+        try {
+            Map<String, String> options = new HashMap<>();
+            options.put("resource_type", "video");
+            options.put("format", "mp3");
+            Map<String, Object> result = cloudinary.uploader().upload(file.getBytes(), options);
+            link = result.get("secure_url").toString();
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+        //
+        Category category = categoryRepository.getById(category_id);
+        //
         Song song = new Song();
+        song.setImage(linkImage);
         song.setLink(link);
+        song.setSinger(singer);
+        song.setAuthor(author);
         song.setName(fileName);
+        song.setCategory(category);
         try {
             songRepository.save(song);
             return  "You have successfully created a song!";
@@ -78,13 +108,42 @@ public class SongController {
         }
         return "Delete successfully!";
     }
-//    public static void main(String[] args) {
-//        String url = "https://res.cloudinary.com/dvf7kmois/video/upload/v1682304168/twnfkb26niygg658ek0l.mp3";
-////        String[] parts = url.split("/");
-////        String lastPart = parts[parts.length - 1];
-////        String publicId = lastPart.substring(0, lastPart.lastIndexOf("."));
-//        String publicId = url.replace("https://res.cloudinary.com/dvf7kmois/", "");
-//        cloudinary.uploader().destroy("publicId",null);
-//
-//    }
+
+    @PostMapping(value = "/GetId")
+    public SongMessage GetById(@RequestParam Long id){
+        Optional<Song> song = songRepository.findById(id);
+        System.out.println("--------------");
+        System.out.println(id);
+        SongMessage songMessage = new SongMessage();
+        if(!song.isEmpty())
+        {
+            Song song1 = song.orElse(new Song());
+            SongDTO songDTO = songMapper.getListSong(song1);
+            songMessage.setMessage("Successfully");
+            songMessage.setSong(songDTO);
+        }
+        else {
+            songMessage.setMessage("Fail");
+        }
+        System.out.println(songMessage.getSong().getName());
+        return songMessage;
+    }
+
+    @PostMapping(value = "/SongCategory")
+    public SongMessage SongCategory(@RequestParam Long category_id){
+        List<Song> songs = songRepository.findByCategory(category_id);
+        List<SongDTO> songDTOS = songMapper.getListSong(songs);
+
+        SongMessage songMessage = new SongMessage();
+        if (songDTOS.isEmpty()) {
+            songMessage.setMessage("Fail");
+            songMessage.setSongs(null);
+        }
+        else {
+            songMessage.setMessage("Successfully");
+            songMessage.setSongs(songDTOS);
+        }
+
+        return songMessage;
+    }
 }
