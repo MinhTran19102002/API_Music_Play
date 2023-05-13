@@ -7,7 +7,10 @@ import com.example.Music_play.exception.ResourceNotFoundException;
 import com.example.Music_play.mapper.SongMapper;
 import com.example.Music_play.model.Category;
 import com.example.Music_play.model.Song;
+import com.example.Music_play.model.SongUpdate;
+import com.example.Music_play.model.User;
 import com.example.Music_play.modelDTO.SongDTO;
+import com.example.Music_play.modelDTO.UserDTO;
 import com.example.Music_play.modelMessage.SongMessage;
 import com.example.Music_play.repository.CategoryRepository;
 import com.example.Music_play.repository.SongRepository;
@@ -42,6 +45,10 @@ public class SongController {
 
     @PostMapping(value = "/create")
     public String createSong(@RequestParam("file") MultipartFile file,@RequestParam("image") MultipartFile image, @RequestParam String name,@RequestParam String author, @RequestParam String singer, @RequestParam Long category_id) throws IOException {
+        System.out.println("--------------");
+        System.out.println(file);
+        System.out.println(image);
+        System.out.println(category_id);
         String fileName = name;
         String link ="";
         String linkImage = "";
@@ -87,26 +94,34 @@ public class SongController {
     }
 
     @PostMapping(value = "/delete")
-    public String deleteSong(@RequestParam Long id){
+    public SongMessage deleteSong(@RequestParam Long id){
         Song song = songRepository.findById(id).
                 orElseThrow(()-> new ResourceNotFoundException("Song not exist with id" + id));
-        String url = song.getLink();
-        String[] parts = url.split("/");
-        String lastPart = parts[parts.length - 1];
-        String publicId = lastPart.substring(0, lastPart.lastIndexOf("."));
+        //get public song
+        String urlSong = song.getLink();
+        String[] partsSong = urlSong.split("/");
+        String lastPartSong = partsSong[partsSong.length - 1];
+        String publicIdSong = lastPartSong.substring(0, lastPartSong.lastIndexOf("."));
+
+        //get public image
+        String urlImage = song.getImage();
+        String[] partsImage = urlImage.split("/");
+        String lastPartImage = partsImage[partsImage.length - 1];
+        String publicIdImage = lastPartImage.substring(0, lastPartImage.lastIndexOf("."));
 //        publicId = "xkg3rhruexvf6gj3kgn8";
         try {
-            Map result = cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type","video"));;
+            Map result = cloudinary.uploader().destroy(publicIdSong, ObjectUtils.asMap("resource_type","video"));
+            Map result1 = cloudinary.uploader().destroy(publicIdImage, ObjectUtils.asMap("resource_type", "image"));
             songRepository.delete(song);
-            System.out.println(publicId);
-            System.out.println(result);
         }
         catch (IOException e){
             System.err.println("Error reading file: " + e.getMessage());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        return "Delete successfully!";
+        SongMessage songMessage = new SongMessage();
+        songMessage.setMessage("Successful");
+        return songMessage;
     }
 
     @PostMapping(value = "/GetId")
@@ -143,7 +158,40 @@ public class SongController {
             songMessage.setMessage("Successfully");
             songMessage.setSongs(songDTOS);
         }
+        return songMessage;
+    }
 
+    @PostMapping(value = "/all")
+    public SongMessage getAllSong(){
+        List<SongDTO> songDTOS = songMapper.getListSong(songRepository.findAll());
+        SongMessage songMessage = new SongMessage();
+        if(songDTOS.isEmpty()){
+            songMessage.setMessage("Fail");
+            songMessage.setSongs(null);
+        }
+        else
+        {
+            songMessage.setSongs(songDTOS);
+            songMessage.setMessage("Successfully");
+        }
+        return songMessage;
+    }
+    @PutMapping(value = "/update/{id}")
+    public SongMessage update(@PathVariable long id, @RequestBody SongUpdate song)
+    {
+        System.out.println("---------------111");
+        SongMessage songMessage= new SongMessage();
+        Song songUpdate = songRepository.findById(id).
+                orElseThrow(()-> new ResourceNotFoundException("Song not exist with id" + id));
+        songUpdate.setName(song.getName());
+        songUpdate.setSinger(song.getSinger());
+        songUpdate.setAuthor(song.getAuthor());
+        songUpdate.setCategory(song.getCategory());
+        songRepository.save(songUpdate);
+        SongDTO songDTO = songMapper.getListSong(songUpdate);
+        songMessage.setSong(songDTO);
+        songMessage.setMessage("Successfully");
+        System.out.println("---------------");
         return songMessage;
     }
 }

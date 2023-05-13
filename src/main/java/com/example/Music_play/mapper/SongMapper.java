@@ -23,6 +23,7 @@ public interface SongMapper {
     @Named("SongDTO")
     SongDTO getListSong(Song song);
 
+    @Named("getNoticeBoardStatusName")
     @IterableMapping(elementTargetType = SongDTO.class, qualifiedByName = "SongDTO")
     List<SongDTO> getListSong(List<Song> songs);
 

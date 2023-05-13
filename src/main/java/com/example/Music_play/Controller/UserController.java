@@ -1,7 +1,10 @@
 package com.example.Music_play.Controller;
 
 import com.example.Music_play.exception.ResourceNotFoundException;
+import com.example.Music_play.mapper.UserMapper;
+import com.example.Music_play.model.Song;
 import com.example.Music_play.model.User;
+import com.example.Music_play.modelDTO.UserDTO;
 import com.example.Music_play.modelMessage.UserMessage;
 import com.example.Music_play.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,28 +18,35 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private UserMapper userMapper;
+
     @PostMapping(value = "/all")
-    public List<User> getAllUser(){
-        return userRepository.findAll();
+    public UserMessage getAllUser(){
+        List<UserDTO> userDTOS = userMapper.getListUser(userRepository.findAll());
+        UserMessage userMessage = new UserMessage();
+        userMessage.setUserDTOS(userDTOS);
+        userMessage.setMessage("Successful");
+        System.out.println("Successful");
+        return userMessage;
     }
 
     @PostMapping(value = "/register")
     public UserMessage register(@RequestBody User user){
+        user.setRole("user");
         UserMessage userMessage = new UserMessage();
         try {
-            userRepository.save(user);
-            userMessage.setUser(user);
+            UserDTO userDTO = userMapper.getListUser(userRepository.save(user));
+            userMessage.setUserDTO(userDTO);
             userMessage.setMessage("You have successfully created a user account!");
             return  userMessage;
         }
         catch (Exception e)
         {
-            userMessage.setUser(null);
+            userMessage.setUserDTO(null);
             userMessage.setMessage("You have failed to create a user account!");
             return userMessage;
         }
-
-        //return  "You have successfully created a user account!";
     }
 
     @GetMapping(value = "/getuserbyid/{id}")
@@ -47,32 +57,49 @@ public class UserController {
         return user;
     }
 
-    @PutMapping(value = "/updateuserbyid/{id}/")
+    @PutMapping(value = "/update/{id}")
     public User updateuserbyid(@PathVariable long id, @RequestBody User user)
     {
-        User updateUser = userRepository.findById(id).get();
+        User updateUser = userRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Song not exist with id" + id));;
         updateUser.setFirst_name(user.getFirst_name());
         updateUser.setLast_name(user.getLast_name());
         updateUser.setPassword(user.getPassword());
         updateUser.setEmail(user.getEmail());
+        userRepository.save(updateUser);
         return updateUser;
     }
     @PostMapping(value = "/login")
     public UserMessage login(@RequestParam String phone, @RequestParam String password){
         System.out.println(phone);
         User user = userRepository.Login(phone, password);
+        UserDTO userDTO = userMapper.getListUser(user);
         UserMessage userLogin = new UserMessage();
         if(user != null)
         {
             userLogin.setMessage("Login is successful!");
-            userLogin.setUser(user);
+            userLogin.setUserDTO(userDTO);
             return userLogin;
         }
         else {
             userLogin.setMessage("Login is failed!");
-            userLogin.setUser(null);
+            userLogin.setUserDTO(null);
             return userLogin;
         }
     }
 
+    @PostMapping(value = "/delete")
+    public UserMessage deleteUser(@RequestParam Long id){
+        UserMessage userMessage = new UserMessage();
+        User user = userRepository.findById(id).
+                orElseThrow(()-> new ResourceNotFoundException("Song not exist with id" + id));
+        if(user != null)
+        {
+            userRepository.delete(user);
+            return userMessage;
+        }
+        else {
+            userMessage.setMessage("Failed");
+            return userMessage;
+        }
+    }
 }
