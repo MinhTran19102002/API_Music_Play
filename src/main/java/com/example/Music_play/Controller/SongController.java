@@ -19,10 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/v1/song")
@@ -124,23 +121,26 @@ public class SongController {
         return songMessage;
     }
 
-    @PostMapping(value = "/GetId")
-    public SongMessage GetById(@RequestParam Long id){
-        Optional<Song> song = songRepository.findById(id);
-        System.out.println("--------------");
-        System.out.println(id);
+    @PostMapping(value = "/GetListId")
+    public SongMessage GetById(@RequestParam List<Long> ids){
+        List<Song> songs = new ArrayList<>();
+        for(Long id: ids){
+            Song song = songRepository.findById(id).
+                    orElseThrow(()-> new ResourceNotFoundException("Song not exist with id" + id));;
+            songs.add(song);
+        }
         SongMessage songMessage = new SongMessage();
-        if(!song.isEmpty())
+        if(!songs.isEmpty())
         {
-            Song song1 = song.orElse(new Song());
-            SongDTO songDTO = songMapper.getListSong(song1);
+            List<SongDTO> songDTOs = songMapper.getListSong(songs);
             songMessage.setMessage("Successfully");
-            songMessage.setSong(songDTO);
+            System.out.println("---"+ songDTOs.get(0).getAuthor());
+            songMessage.setSongs(songDTOs);
         }
         else {
             songMessage.setMessage("Fail");
         }
-        System.out.println(songMessage.getSong().getName());
+
         return songMessage;
     }
 
@@ -179,7 +179,6 @@ public class SongController {
     @PutMapping(value = "/update/{id}")
     public SongMessage update(@PathVariable long id, @RequestBody SongUpdate song)
     {
-        System.out.println("---------------111");
         SongMessage songMessage= new SongMessage();
         Song songUpdate = songRepository.findById(id).
                 orElseThrow(()-> new ResourceNotFoundException("Song not exist with id" + id));
@@ -191,7 +190,23 @@ public class SongController {
         SongDTO songDTO = songMapper.getListSong(songUpdate);
         songMessage.setSong(songDTO);
         songMessage.setMessage("Successfully");
-        System.out.println("---------------");
+        return songMessage;
+    }
+    @PostMapping(value = "/GetByName")
+    public SongMessage GetByName(@RequestParam String name){
+        List<Song> songs ;
+        songs = songRepository.GetByName(name);
+        SongMessage songMessage = new SongMessage();
+        if(!songs.isEmpty())
+        {
+            List<SongDTO> songDTOs = songMapper.getListSong(songs);
+            songMessage.setMessage("Successfully");
+            songMessage.setSongs(songDTOs);
+        }
+        else {
+            songMessage.setMessage("Fail");
+        }
+        System.out.println(songMessage.getSongs());
         return songMessage;
     }
 }

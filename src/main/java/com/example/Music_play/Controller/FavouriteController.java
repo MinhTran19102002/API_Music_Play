@@ -13,6 +13,8 @@ import com.example.Music_play.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/favourite")
 public class FavouriteController {
@@ -77,6 +79,24 @@ public class FavouriteController {
         favourite = favouriteReponsitory.findFavorite(songId, userId);
         if(favourite != null){
             favouriteReponsitory.delete(favourite);
+            favouriteMessage.setMessage("Successful");
+        }
+        else {
+            favouriteMessage.setMessage("Failed");
+        }
+        return favouriteMessage;
+    }
+    @PostMapping(value = "/listByUser")
+    public FavouriteMessage listByUser(@RequestParam Long userId){
+        System.out.println("userId");
+        System.out.println("------------");
+        List<Favourite> favourite;
+        List<FavouriteDTO>  favouriteDTOs ;
+        FavouriteMessage favouriteMessage = new FavouriteMessage();
+        favourite = favouriteReponsitory.listByUser(userId);
+        if(favourite != null){
+            favouriteDTOs = favouriteMapper.getListFavorite(favourite);
+            favouriteMessage.setFavorites(favouriteDTOs);
             favouriteMessage.setMessage("Successful");
         }
         else {
