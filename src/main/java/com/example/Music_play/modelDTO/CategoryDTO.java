@@ -1,10 +1,11 @@
 package com.example.Music_play.modelDTO;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class CategoryDTO {
     private long id;
 
