@@ -41,11 +41,8 @@ public class SongController {
     }
 
     @PostMapping(value = "/create")
-    public String createSong(@RequestParam("file") MultipartFile file,@RequestParam("image") MultipartFile image, @RequestParam String name,@RequestParam String author, @RequestParam String singer, @RequestParam Long category_id) throws IOException {
-        System.out.println("--------------");
-        System.out.println(file);
-        System.out.println(image);
-        System.out.println(category_id);
+    public SongMessage createSong(@RequestParam("file") MultipartFile file,@RequestParam("image") MultipartFile image, @RequestParam String name,@RequestParam String author, @RequestParam String singer, @RequestParam Long category_id) throws IOException {
+        SongMessage songMessage = new SongMessage();
         String fileName = name;
         String link ="";
         String linkImage = "";
@@ -81,13 +78,16 @@ public class SongController {
         song.setName(fileName);
         song.setCategory(category);
         try {
+            SongDTO songDTO = songMapper.getListSong(song);
+            songMessage.setSong(songDTO);
+            songMessage.setMessage("You have successfully created a song!");
             songRepository.save(song);
-            return  "You have successfully created a song!";
         }
         catch (Exception e)
         {
-            return "You have failed created a song!";
+            songMessage.setMessage("You have failed created a song!");
         }
+        return songMessage;
     }
 
     @PostMapping(value = "/delete")
@@ -123,13 +123,26 @@ public class SongController {
 
     @PostMapping(value = "/GetListId")
     public SongMessage GetById(@RequestParam List<Long> ids){
+        System.out.println(ids);
+        System.out.println("?");
+        SongMessage songMessage = new SongMessage();
+        if(ids.isEmpty()){
+            System.out.println("--------");
+            System.out.println(songMessage.getMessage());
+            songMessage.setMessage("Fail");
+            return songMessage;
+        }
         List<Song> songs = new ArrayList<>();
         for(Long id: ids){
-            Song song = songRepository.findById(id).
-                    orElseThrow(()-> new ResourceNotFoundException("Song not exist with id" + id));;
-            songs.add(song);
+            if(songRepository.findById(id) !=null) {
+                Song song = songRepository.findById(id).
+                        orElse(null);
+                if(song!=null) {
+                    songs.add(song);
+                }
+            }
         }
-        SongMessage songMessage = new SongMessage();
+
         if(!songs.isEmpty())
         {
             List<SongDTO> songDTOs = songMapper.getListSong(songs);

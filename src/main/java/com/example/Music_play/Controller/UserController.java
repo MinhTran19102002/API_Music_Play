@@ -50,15 +50,18 @@ public class UserController {
     }
 
     @GetMapping(value = "/getuserbyid/{id}")
-    public User getuserbyid(@PathVariable long id)
+    public UserMessage getuserbyid(@PathVariable long id)
     {
         User user = userRepository.findById(id).
                 orElseThrow(()-> new ResourceNotFoundException("User not exist with id" + id));
-        return user;
+        UserDTO userDTO = userMapper.getListUser(user);
+        UserMessage userMessage = new UserMessage();
+        userMessage.setUserDTO(userDTO);
+        return userMessage;
     }
 
     @PutMapping(value = "/update/{id}")
-    public User updateuserbyid(@PathVariable long id, @RequestBody User user)
+    public UserMessage updateuserbyid(@PathVariable long id, @RequestBody User user)
     {
         User updateUser = userRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Song not exist with id" + id));;
         updateUser.setFirst_name(user.getFirst_name());
@@ -66,7 +69,11 @@ public class UserController {
         updateUser.setPassword(user.getPassword());
         updateUser.setEmail(user.getEmail());
         userRepository.save(updateUser);
-        return updateUser;
+        UserDTO userDTO = userMapper.getListUser(user);
+        UserMessage userMessage = new UserMessage();
+        userMessage.setUserDTO(userDTO);
+        userMessage.setMessage("Successful");
+        return userMessage;
     }
     @PostMapping(value = "/login")
     public UserMessage login(@RequestParam String phone, @RequestParam String password){
